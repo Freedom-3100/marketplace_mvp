@@ -11,7 +11,11 @@
     <fragment
         android:id="@+id/titleScreen"
         android:name="com.example.marketplace_mvp.screens.TitleScreen"
-        android:label="TitleScreen" />
+        android:label="TitleScreen" >
+        <action
+            android:id="@+id/action_titleScreen_to_toolBarFragment"
+            app:destination="@id/toolBarFragment" />
+    </fragment>
     <fragment
         android:id="@+id/toolBarFragment"
         android:name="com.example.marketplace_mvp.screens.toolbar.ToolBarFragment"
