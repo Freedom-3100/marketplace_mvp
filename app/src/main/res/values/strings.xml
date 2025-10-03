@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">marketplace_mvp</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="application_card">Application Card</string>
+    <string name="title_screen">Title Screen</string>
+    <string name="default_screen">Default screen</string>
+    <string name="strip">Лента</string>
+    <string name="likes">Избранное</string>
+    <string name="settings">Настройки\n</string>
+    <string name="Main">Главная</string>
+</resources>

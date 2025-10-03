@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/navigation_graph"
+    app:startDestination="@id/defaultScreen">
+
+    <fragment
+        android:id="@+id/applicationCard"
+        android:name="com.example.marketplace_mvp.screens.ApplicationCard"
+        android:label="ApplicationCard" />
+    <fragment
+        android:id="@+id/titleScreen"
+        android:name="com.example.marketplace_mvp.screens.TitleScreen"
+        android:label="TitleScreen" />
+    <fragment
+        android:id="@+id/defaultScreen"
+        android:name="com.example.marketplace_mvp.screens.DefaultScreen"
+        android:label="DefaultScreen" >
+        <action
+            android:id="@+id/action_defaultScreen_to_applicationCard"
+            app:destination="@id/applicationCard" />
+    </fragment>
+</navigation>
