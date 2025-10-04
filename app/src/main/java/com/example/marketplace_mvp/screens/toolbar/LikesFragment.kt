@@ -62,6 +62,8 @@ import com.example.marketplace_mvp.ui.theme.SurfaceColor
 import com.example.marketplace_mvp.ui.theme.TextColor
 import com.example.marketplace_mvp.ui.theme.TextSecondaryColor
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.outlined.Favorite
 
 class LikesFragment : Fragment(R.layout.likes_fragment) {
 
@@ -167,7 +169,7 @@ fun CategorySection(categoryName: String, navController: NavController) {
                 }
             ) {
                 Icon(
-                    imageVector = Icons.Default.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = "Scroll",
                     tint = TextSecondaryColor
                 )
@@ -184,7 +186,7 @@ fun CategorySection(categoryName: String, navController: NavController) {
             items(appGroups) { group ->
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.width(LocalConfiguration.current.screenWidthDp.dp - 16.dp) // одна колонка на весь экран
+                    modifier = Modifier.width(LocalConfiguration.current.screenWidthDp.dp - 32.dp) // одна колонка на весь экран
                 ) {
                     group.forEach { appName ->
                         AppCard(

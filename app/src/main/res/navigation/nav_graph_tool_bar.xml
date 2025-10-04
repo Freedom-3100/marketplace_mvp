@@ -17,7 +17,7 @@
         android:label="StripFragment" />
     <fragment
         android:id="@+id/settingsFragment2"
-        android:name="com.example.marketplace_mvp.screens.toolbar.SettingsFragment"
-        tools:layout="@layout/settings_fragment"
+        android:name="com.example.marketplace_mvp.screens.toolbar.SearchFragment"
+        tools:layout="@layout/search_fragment"
         android:label="SettingsFragment" />
 </navigation>
