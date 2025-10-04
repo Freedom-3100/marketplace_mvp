@@ -5,5 +5,6 @@ data class AppInfo(
     val name: String = "",
     val description: String = "",
     val version: String = "",
-    val iconUrl: String = ""
+    val iconUrl: String = "",
+    val apkUrl: String = ""
 )
