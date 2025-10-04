@@ -14,10 +14,14 @@ import androidx.navigation.fragment.NavHostFragment
 import com.example.marketplace_mvp.databinding.ActivityMainBinding
 import androidx.core.content.edit
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
+import com.example.marketplace_mvp.R
+
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var appSettings: AppSettings
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,32 +30,22 @@ class MainActivity : AppCompatActivity() {
 
         appSettings = AppSettings(this)
 
-        // Ждем когда NavController будет готов
+        // Получаем NavController
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.containerView) as NavHostFragment
-        navHostFragment.let { fragment ->
-            fragment.findNavController().let { navController ->
-                navigateToStartScreen(navController)
-            }
-        }
-    }
+        val navController = navHostFragment.navController
 
-    private fun navigateToStartScreen(navController: NavController) {
-        val startDestination = if (appSettings.shouldShowFirstLaunch()) {
-            R.id.titleScreen
+        // Выбираем стартовый граф
+        val graphId = if (appSettings.shouldShowFirstLaunch()) {
+            R.navigation.nav_graph_onboarding
         } else {
-            R.id.toolBarFragment
+            R.navigation.navigation_graph
         }
 
-        val navOptions = NavOptions.Builder()
-            .setLaunchSingleTop(true)
-            .setPopUpTo(R.id.navigation_graph, true) // Очищает back stack
-            .build()
-
-        navController.navigate(startDestination, null, navOptions)
+        // Присваиваем выбранный граф сразу
+        navController.setGraph(graphId, null)
     }
 }
-
 class AppSettings(private val context: Context) {
     private val sharedPref = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
 

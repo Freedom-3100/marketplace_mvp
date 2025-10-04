@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_onboarding"
+    app:startDestination="@id/secondStepScreen2">
+
+    <fragment
+        android:id="@+id/secondStepScreen2"
+        android:name="com.example.marketplace_mvp.screens.titlescreen.SecondStepScreen"
+        tools:layout="@layout/fragment_onboarding_second_screen"
+        android:label="SecondStepScreen" >
+        <action
+            android:id="@+id/action_secondStepScreen2_to_thirdStepScreen2"
+            app:destination="@id/thirdStepScreen2" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/thirdStepScreen2"
+        android:name="com.example.marketplace_mvp.screens.titlescreen.ThirdStepScreen"
+        tools:layout="@layout/fragment_onboarding_third_screen"
+        android:label="ThirdStepScreen" >
+        <action
+            android:id="@+id/action_thirdStepScreen2_to_fourthStepScreen2"
+            app:destination="@id/fourthStepScreen2" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/fourthStepScreen2"
+        android:name="com.example.marketplace_mvp.screens.titlescreen.FourthStepScreen"
+        tools:layout="@layout/fragment_onboarding_fourth_screen"
+        android:label="FourthStepScreen"
+        tools:ignore="ExtraText">
+        <action
+            android:id="@+id/action_fourthStepScreen2_to_mainGraph"
+            app:destination="@id/toolBarFragment"
+            app:popUpTo="@id/nav_graph_onboarding"
+            app:popUpToInclusive="true"/>
+    </fragment>
+
+</navigation>
