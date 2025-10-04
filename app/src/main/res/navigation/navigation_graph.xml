@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/navigation_graph"
     app:startDestination="@id/toolBarFragment">
 
     <fragment
         android:id="@+id/applicationCard"
         android:name="com.example.marketplace_mvp.screens.feedscreen.ApplicationCard"
+        tools:layout="@layout/application_card"
         android:label="ApplicationCard" />
     <fragment
         android:id="@+id/titleScreen"
         android:name="com.example.marketplace_mvp.screens.TitleScreen"
+        tools:layout="@layout/title_screen"
         android:label="TitleScreen" >
         <action
             android:id="@+id/action_titleScreen_to_toolBarFragment"
@@ -19,6 +22,7 @@
     <fragment
         android:id="@+id/toolBarFragment"
         android:name="com.example.marketplace_mvp.screens.toolbar.ToolBarFragment"
+        tools:layout="@layout/tool_bar_fragment"
         android:label="ToolBarFragment" >
         <action
             android:id="@+id/action_toolBarFragment_to_applicationCard"

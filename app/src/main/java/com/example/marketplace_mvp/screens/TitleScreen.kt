@@ -27,6 +27,7 @@ class TitleScreen : Fragment(R.layout.title_screen) {
     private fun navigateToDefaultScreen() {
         val appSettings = AppSettings(requireContext())
         appSettings.setFirstLaunchCompleted()
-        findNavController().navigate(R.id.toolBarFragment)
+        findNavController().navigate(R.id.action_titleScreen_to_toolBarFragment)
     }
 }
+
