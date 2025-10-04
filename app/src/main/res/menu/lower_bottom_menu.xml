@@ -12,7 +12,7 @@
 
     <item
         android:id="@+id/settingsFragment2"
-        android:icon="@drawable/outline_android_24"
+        android:icon="@drawable/search"
         android:title="@string/settings" />
 
 </menu>

@@ -1,5 +1,6 @@
 package com.example.marketplace_mvp.screens.toolbar
 
+import android.R.attr.category
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -30,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -64,6 +66,17 @@ import com.example.marketplace_mvp.ui.theme.TextSecondaryColor
 import kotlinx.coroutines.launch
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.*
+
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.marketplace_mvp.ui.components.InstallButton
+
+data class Category(
+    val name: String,
+    val icon: ImageVector
+)
 
 class LikesFragment : Fragment(R.layout.likes_fragment) {
 
@@ -101,18 +114,16 @@ fun LikesScreen(navController: NavController) {
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp)
-                .padding(top = 28.dp)
+                .padding(14.dp)
         ) {
             Text(
                 text = "Интересное",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    color = TextColor
-                )
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 0.dp),
             )
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         AppCategories(navController)
     }
@@ -125,7 +136,7 @@ fun AppCategories(navController: NavController) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(12.dp)
+            .padding(vertical = 12.dp)
     ) {
         items(categories) { category ->
             CategorySection(categoryName = category, navController = navController)
@@ -144,20 +155,22 @@ fun CategorySection(categoryName: String, navController: NavController) {
     val appGroups = apps.chunked(3)
 
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
     ) {
         // Заголовок + стрелочка
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = categoryName,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 20.sp,
-                    color = TextColor
-                )
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold,
             )
             IconButton(
                 onClick = {
@@ -169,23 +182,21 @@ fun CategorySection(categoryName: String, navController: NavController) {
                 }
             ) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     contentDescription = "Scroll",
                     tint = TextSecondaryColor
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
 
         LazyRow(
             state = listState,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 8.dp)
+            horizontalArrangement = Arrangement.spacedBy(0.dp),
+            contentPadding = PaddingValues(horizontal = 14.dp)
         ) {
             items(appGroups) { group ->
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.width(LocalConfiguration.current.screenWidthDp.dp - 32.dp) // одна колонка на весь экран
                 ) {
                     group.forEach { appName ->
@@ -205,16 +216,14 @@ fun CategorySection(categoryName: String, navController: NavController) {
 fun AppCard(appName: String, navController: NavController, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
-            .height(100.dp)
             .clickable {
                 navController.navigate(R.id.applicationCard)
             },
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-        colors = CardDefaults.cardColors(containerColor = SurfaceColor)
+        colors = CardDefaults.cardColors(containerColor = BackgroundColor)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(12.dp)
+            modifier = Modifier.padding(vertical = 12.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -224,22 +233,50 @@ fun AppCard(appName: String, navController: NavController, modifier: Modifier = 
             ) {
                 Text(text = "📱", fontSize = 24.sp)
             }
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .weight(1f)
+            ) {
+                Text(
+                    text = appName,
+                    style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+                Text(
+                    text = appName,
+                    style = MaterialTheme.typography.bodyLarge.copy(color = TextSecondaryColor),
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    modifier = Modifier.padding(bottom = 2.dp)
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Star,
+                        contentDescription = "star icon",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Text(
+                        text = "3.9",
+                        style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
+                        fontSize = 16.sp,
+                        maxLines = 1
+                    )
+                }
+            }
 
-            Spacer(modifier = Modifier.width(12.dp))
-
-            Text(
-                text = appName,
-                style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
-                fontSize = 16.sp,
-                maxLines = 2
-            )
+            AppTheme {
+                InstallButton(
+                    apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link..."
+                )
+            }
+            //get button here
         }
     }
 }
-
-// Preview для Android Studio
-//@Preview(showBackground = true)
-//@Composable
-//fun LikesScreenPreview() {
-//    LikesScreen()
-//}

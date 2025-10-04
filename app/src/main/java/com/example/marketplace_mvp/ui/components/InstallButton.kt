@@ -1,13 +1,20 @@
 package com.example.marketplace_mvp.ui.components
 
+import android.app.PendingIntent
 import android.content.ActivityNotFoundException
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -57,13 +64,16 @@ fun InstallButton(
                 }
             }
         },
-        modifier = Modifier.padding(8.dp),
-        // Button styling using your theme
+        modifier = Modifier
+            .padding(16.dp)
+            .height(36.dp) // 👈 smaller height
+            .defaultMinSize(minWidth = 80.dp), // 👈 optional width control
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), // 👈 tighter padding
     ) {
         Text(
             text = buttonText,
             color = MaterialTheme.colorScheme.onPrimary,
-            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
+            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold)
         )
     }
 }
@@ -92,16 +102,40 @@ private fun downloadAndInstallApk(context: Context, url: String) {
     }
 }
 
-private fun installApk(context: Context, file: File) {
-    val uri: Uri = FileProvider.getUriForFile(
-        context,
-        context.packageName + ".fileprovider",
-        file
-    )
-    val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-        setDataAndType(uri, "application/vnd.android.package-archive")
-        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+private fun installApk(context: Context, apkFile: File) {
+    val packageInstaller = context.packageManager.packageInstaller
+    val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+    val sessionId = packageInstaller.createSession(params)
+    val session = packageInstaller.openSession(sessionId)
+
+    // Copy the APK into the session
+    apkFile.inputStream().use { input ->
+        session.openWrite("app_install", 0, -1).use { output ->
+            input.copyTo(output)
+            session.fsync(output)
+        }
     }
-    context.startActivity(intent)
+
+    // Create an Intent to get installation result
+    val intent = Intent(context, InstallResultReceiver::class.java)
+    val pendingIntent = PendingIntent.getBroadcast(
+        context,
+        0,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+    session.commit(pendingIntent.intentSender)
+    session.close()
 }
 
+class InstallResultReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
+        val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
+        if (status == PackageInstaller.STATUS_SUCCESS) {
+            Log.d("Installer", "Installation succeeded!")
+        } else {
+            Log.e("Installer", "Installation failed: $message")
+        }
+    }
+}
