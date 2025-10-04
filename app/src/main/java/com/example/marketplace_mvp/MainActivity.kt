@@ -55,3 +55,7 @@ class AppSettings(private val context: Context) {
         sharedPref.edit { putBoolean("first_launch", false) }
     }
 }
+
+
+
+
