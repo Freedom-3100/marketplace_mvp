@@ -1,0 +1,194 @@
+Index: build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>// Top-level build file where you can add configuration options common to all sub-projects/modules.\nplugins {\n    alias(libs.plugins.android.application) apply false\n    alias(libs.plugins.kotlin.android) apply false\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/build.gradle.kts b/build.gradle.kts
+--- a/build.gradle.kts	(revision 7f8c28385930282d4bfbfd77825fdf078adc94f3)
++++ b/build.gradle.kts	(date 1759577882000)
+@@ -2,4 +2,6 @@
+ plugins {
+     alias(libs.plugins.android.application) apply false
+     alias(libs.plugins.kotlin.android) apply false
++
++    id("com.google.gms.google-services") version "4.4.3" apply false
+ }
+\ No newline at end of file
+Index: app/build.gradle.kts
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>plugins {\n    alias(libs.plugins.android.application)\n    alias(libs.plugins.kotlin.android)\n}\n\nandroid {\n    namespace = \"com.example.marketplace_mvp\"\n    compileSdk = 36\n\n    defaultConfig {\n        applicationId = \"com.example.marketplace_mvp\"\n        minSdk = 24\n        targetSdk = 36\n        versionCode = 1\n        versionName = \"1.0\"\n\n        testInstrumentationRunner = \"androidx.test.runner.AndroidJUnitRunner\"\n    }\n\n    buildTypes {\n        release {\n            isMinifyEnabled = false\n            proguardFiles(\n                getDefaultProguardFile(\"proguard-android-optimize.txt\"),\n                \"proguard-rules.pro\"\n            )\n        }\n    }\n    compileOptions {\n        sourceCompatibility = JavaVersion.VERSION_11\n        targetCompatibility = JavaVersion.VERSION_11\n    }\n    kotlinOptions {\n        jvmTarget = \"11\"\n    }\n    buildFeatures {\n        viewBinding = true\n    }\n}\n\ndependencies {\n\n    implementation(libs.androidx.core.ktx)\n    implementation(libs.androidx.appcompat)\n    implementation(libs.material)\n    implementation(libs.androidx.constraintlayout)\n    implementation(libs.androidx.navigation.fragment.ktx)\n    implementation(libs.androidx.navigation.ui.ktx)\n    testImplementation(libs.junit)\n    androidTestImplementation(libs.androidx.junit)\n    androidTestImplementation(libs.androidx.espresso.core)\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/build.gradle.kts b/app/build.gradle.kts
+--- a/app/build.gradle.kts	(revision 7f8c28385930282d4bfbfd77825fdf078adc94f3)
++++ b/app/build.gradle.kts	(date 1759577963131)
+@@ -1,6 +1,9 @@
+ plugins {
+     alias(libs.plugins.android.application)
+     alias(libs.plugins.kotlin.android)
++
++    id("com.android.application")
++    id("com.google.gms.google-services")
+ }
+ 
+ android {
+@@ -49,4 +52,7 @@
+     testImplementation(libs.junit)
+     androidTestImplementation(libs.androidx.junit)
+     androidTestImplementation(libs.androidx.espresso.core)
++
++    implementation(platform("com.google.firebase:firebase-bom:34.3.0"))
++    implementation("com.google.firebase:firebase-analytics")
+ }
+\ No newline at end of file
+Index: appstore_backend/src/main/kotlin/AppInfo.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/appstore_backend/src/main/kotlin/AppInfo.kt b/appstore_backend/src/main/kotlin/AppInfo.kt
+new file mode 100644
+--- /dev/null	(date 1759563368600)
++++ b/appstore_backend/src/main/kotlin/AppInfo.kt	(date 1759563368600)
+@@ -0,0 +1,14 @@
++package com.example
++
++import io.ktor.http.Url
++import kotlinx.serialization.Serializable
++
++
++@Serializable
++data class AppInfo(
++    val id:Int,
++    val name:String,
++    val description:String,
++    val version:String,
++    val iconUrl: String
++)
+Index: app/src/main/java/com/example/marketplace_mvp/dto/AppInfo.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/marketplace_mvp/dto/AppInfo.kt b/app/src/main/java/com/example/marketplace_mvp/dto/AppInfo.kt
+new file mode 100644
+--- /dev/null	(date 1759578071261)
++++ b/app/src/main/java/com/example/marketplace_mvp/dto/AppInfo.kt	(date 1759578071261)
+@@ -0,0 +1,9 @@
++package com.example.marketplace_mvp.dto
++
++data class AppInfo(
++    val id: String = "",
++    val name: String = "",
++    val description: String = "",
++    val version: String = "",
++    val iconUrl: String = ""
++)
+\ No newline at end of file
+Index: app/src/androidTest/java/com/example/backend/ExampleInstrumentedTest.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/androidTest/java/com/example/backend/ExampleInstrumentedTest.kt b/app/src/androidTest/java/com/example/backend/ExampleInstrumentedTest.kt
+new file mode 100644
+--- /dev/null	(date 1759556557900)
++++ b/app/src/androidTest/java/com/example/backend/ExampleInstrumentedTest.kt	(date 1759556557900)
+@@ -0,0 +1,24 @@
++package com.example.backend
++
++import androidx.test.platform.app.InstrumentationRegistry
++import androidx.test.ext.junit.runners.AndroidJUnit4
++
++import org.junit.Test
++import org.junit.runner.RunWith
++
++import org.junit.Assert.*
++
++/**
++ * Instrumented test, which will execute on an Android device.
++ *
++ * See [testing documentation](http://d.android.com/tools/testing).
++ */
++@RunWith(AndroidJUnit4::class)
++class ExampleInstrumentedTest {
++    @Test
++    fun useAppContext() {
++        // Context of the app under test.
++        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
++        assertEquals("com.example.backend", appContext.packageName)
++    }
++}
+\ No newline at end of file
+Index: app/google-services.json
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/google-services.json b/app/google-services.json
+new file mode 100644
+--- /dev/null	(date 1759577430495)
++++ b/app/google-services.json	(date 1759577430495)
+@@ -0,0 +1,29 @@
++{
++  "project_info": {
++    "project_number": "252000734491",
++    "project_id": "appstore-e84b9",
++    "storage_bucket": "appstore-e84b9.firebasestorage.app"
++  },
++  "client": [
++    {
++      "client_info": {
++        "mobilesdk_app_id": "1:252000734491:android:648f76ba937aa5fd1357be",
++        "android_client_info": {
++          "package_name": "com.example.marketplace_mvp"
++        }
++      },
++      "oauth_client": [],
++      "api_key": [
++        {
++          "current_key": "AIzaSyDJzaVl7dZ649OrDZsoy1kDUmFnoPf_-KY"
++        }
++      ],
++      "services": {
++        "appinvite_service": {
++          "other_platform_oauth_client": []
++        }
++      }
++    }
++  ],
++  "configuration_version": "1"
++}
+\ No newline at end of file
+Index: app/src/test/java/com/example/backend/ExampleUnitTest.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/test/java/com/example/backend/ExampleUnitTest.kt b/app/src/test/java/com/example/backend/ExampleUnitTest.kt
+new file mode 100644
+--- /dev/null	(date 1759556557735)
++++ b/app/src/test/java/com/example/backend/ExampleUnitTest.kt	(date 1759556557735)
+@@ -0,0 +1,17 @@
++package com.example.backend
++
++import org.junit.Test
++
++import org.junit.Assert.*
++
++/**
++ * Example local unit test, which will execute on the development machine (host).
++ *
++ * See [testing documentation](http://d.android.com/tools/testing).
++ */
++class ExampleUnitTest {
++    @Test
++    fun addition_isCorrect() {
++        assertEquals(4, 2 + 2)
++    }
++}
+\ No newline at end of file
