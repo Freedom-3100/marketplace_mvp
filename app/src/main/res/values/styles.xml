@@ -1,0 +1,21 @@
+<resources>
+    <!-- Шрифт для текста -->
+    <style name="TextAppearance.BottomNav" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="fontFamily">@font/wixmadefortext_medium</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <!-- Полный стиль BottomNavigationView -->
+    <style name="Widget.App.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="itemTextAppearanceActive">@style/TextAppearance.BottomNav</item>
+        <item name="itemTextAppearanceInactive">@style/TextAppearance.BottomNav</item>
+        <item name="itemRippleColor">@color/primary_color</item>
+        <item name="itemActiveIndicatorStyle">@style/BottomNav.ActiveIndicator</item>
+    </style>
+
+    <!-- Синий фон активного пункта (PrimaryColor), обводящий иконку и текст -->
+    <style name="BottomNav.ActiveIndicator" parent="">
+        <item name="android:color">@color/primary_color</item>
+    </style>
+
+</resources>
