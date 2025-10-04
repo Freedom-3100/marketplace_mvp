@@ -14,4 +14,8 @@
     <string name="likes">Избранное</string>
     <string name="settings">Настройки\n</string>
     <string name="Main">Главная</string>
+    <string name="firstscreen">FirstScreen</string>
+    <string name="secondscreen">SecondScreen</string>
+    <string name="thirdscreen">ThirdScreen</string>
+    <string name="fourthscreen">FourthScreen</string>
 </resources>
