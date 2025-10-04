@@ -65,6 +65,12 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:5.20.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:6.1.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
+
     implementation("com.google.firebase:firebase-firestore-ktx:25.1.4")
     implementation("com.google.firebase:firebase-storage-ktx:21.0.2")
 }
