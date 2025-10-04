@@ -157,7 +157,7 @@ fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(14.dp)
+            .padding(bottom = 14.dp, start = 14.dp,end = 14.dp, top = 28.dp)
     ) {
         // THIS COLUMN IS SCROLLABLE
         Column(

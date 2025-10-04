@@ -114,7 +114,7 @@ fun LikesScreen(navController: NavController) {
             modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(bottom = 14.dp, start = 14.dp,end = 14.dp, top = 28.dp)
         ) {
             Text(
                 text = "Интересное",
