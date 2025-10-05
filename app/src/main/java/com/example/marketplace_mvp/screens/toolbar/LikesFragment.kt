@@ -69,8 +69,14 @@ import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material3.*
 import androidx.compose.material.icons.filled.*
-
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.marketplace_mvp.firestore.AppsViewModel
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.fragment.app.viewModels
+import coil.compose.AsyncImage
 import com.example.marketplace_mvp.ui.components.InstallButton
 
 data class Category(
@@ -80,6 +86,8 @@ data class Category(
 
 class LikesFragment : Fragment(R.layout.likes_fragment) {
 
+    private val viewModel: AppsViewModel by viewModels()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -87,16 +95,9 @@ class LikesFragment : Fragment(R.layout.likes_fragment) {
     ): View {
         return ComposeView(requireContext()).apply {
             setContent {
-                // Оборачиваем весь контент в AppTheme
                 AppTheme {
-                    val navController = (activity as? AppCompatActivity)
-                        ?.supportFragmentManager
-                        ?.findFragmentById(R.id.containerView)
-                        ?.findNavController()
-
-                    navController?.let {
-                        LikesScreen(it)
-                    }
+                    val navController = findNavController()
+                    LikesScreen(navController, viewModel) // ← передаём ViewModel
                 }
             }
         }
@@ -104,33 +105,44 @@ class LikesFragment : Fragment(R.layout.likes_fragment) {
 }
 
 @Composable
-fun LikesScreen(navController: NavController) {
+fun LikesScreen(navController: NavController, viewModel: AppsViewModel) {
+    LaunchedEffect(Unit) {
+        viewModel.loadAllAppNames() // ← только имена
+    }
+
+    val appNames by viewModel.appNames.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val message by viewModel.message.collectAsState()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor) // фон из темы
+            .background(BackgroundColor)
     ) {
-        Column(
-            modifier = Modifier
-                .wrapContentHeight()
-                .fillMaxWidth()
-                .padding(bottom = 14.dp, start = 14.dp,end = 14.dp, top = 28.dp)
-        ) {
-            Text(
-                text = "Интересное",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(bottom = 0.dp),
+        if (isLoading && appNames.isEmpty()) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
             )
         }
 
-        AppCategories(navController)
+        if (!message.isNullOrBlank()) {
+            Text(message!!, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+        }
+
+        AppCategories(
+            navController = navController,
+            appNames = appNames,
+            viewModel = viewModel // ← передаём ViewModel вниз
+        )
     }
 }
 
 @Composable
-fun AppCategories(navController: NavController) {
+fun AppCategories(
+    navController: NavController,
+    appNames: List<String>,
+    viewModel: AppsViewModel
+) {
     val categories = listOf("Популярное", "Для вас", "Что нового")
 
     LazyColumn(
@@ -139,26 +151,31 @@ fun AppCategories(navController: NavController) {
             .padding(vertical = 12.dp)
     ) {
         items(categories) { category ->
-            CategorySection(categoryName = category, navController = navController)
+            CategorySection(
+                categoryName = category,
+                appNames = appNames,
+                navController = navController,
+                viewModel = viewModel
+            )
             Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }
 
 @Composable
-fun CategorySection(categoryName: String, navController: NavController) {
-    val apps = List(15) { "$categoryName App $it" }
+fun CategorySection(
+    categoryName: String,
+    appNames: List<String>,
+    navController: NavController,
+    viewModel: AppsViewModel
+) {
+    if (appNames.isEmpty()) return
+
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    val appGroups = appNames.chunked(3)
 
-    // Группируем приложения по 3 для вертикальной стопки
-    val appGroups = apps.chunked(3)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        // Заголовок + стрелочка
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -174,21 +191,17 @@ fun CategorySection(categoryName: String, navController: NavController) {
             )
             IconButton(
                 onClick = {
-                    val visibleIndex = listState.firstVisibleItemIndex
-                    val nextIndex = (visibleIndex + 1).coerceAtMost(appGroups.lastIndex)
-                    scope.launch {
-                        listState.animateScrollToItem(nextIndex)
-                    }
+                    val next = (listState.firstVisibleItemIndex + 1).coerceAtMost(appGroups.lastIndex)
+                    scope.launch { listState.animateScrollToItem(next) }
                 }
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
-                    contentDescription = "Scroll",
+                    contentDescription = "Прокрутить",
                     tint = TextSecondaryColor
                 )
             }
         }
-
 
         LazyRow(
             state = listState,
@@ -197,12 +210,13 @@ fun CategorySection(categoryName: String, navController: NavController) {
         ) {
             items(appGroups) { group ->
                 Column(
-                    modifier = Modifier.width(LocalConfiguration.current.screenWidthDp.dp - 32.dp) // одна колонка на весь экран
+                    modifier = Modifier.width(LocalConfiguration.current.screenWidthDp.dp - 32.dp)
                 ) {
                     group.forEach { appName ->
                         AppCard(
                             appName = appName,
                             navController = navController,
+                            viewModel = viewModel, // ← передаём ViewModel
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -213,26 +227,57 @@ fun CategorySection(categoryName: String, navController: NavController) {
 }
 
 @Composable
-fun AppCard(appName: String, navController: NavController, modifier: Modifier = Modifier) {
+fun AppCard(
+    appName: String,
+    navController: NavController,
+    viewModel: AppsViewModel,
+    modifier: Modifier = Modifier
+) {
+    val appInfo = viewModel.cachedApps[appName]
+
+    // Ленивая загрузка полных данных
+    LaunchedEffect(appName) {
+        viewModel.loadAppInfoByName(appName)
+    }
+
     Card(
         modifier = modifier
-            .clickable {
-                navController.navigate(R.id.applicationCard)
-            },
+            .clickable { /* опционально */ },
         colors = CardDefaults.cardColors(containerColor = BackgroundColor)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 12.dp)
         ) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(PrimaryVariant, shape = RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "📱", fontSize = 24.sp)
+            // Изображение
+            if (!appInfo?.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = appInfo.imageUrl,
+                    contentDescription = "${appInfo.name} icon",
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(PrimaryVariant, shape = RoundedCornerShape(12.dp)),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(PrimaryVariant, shape = RoundedCornerShape(12.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (appInfo == null) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(text = "📱", fontSize = 24.sp)
+                    }
+                }
             }
+
+            // Текст
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
@@ -246,37 +291,50 @@ fun AppCard(appName: String, navController: NavController, modifier: Modifier = 
                     maxLines = 1,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
-                Text(
-                    text = appName,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = TextSecondaryColor),
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "star icon",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp),
-                    )
+
+                if (appInfo != null) {
                     Text(
-                        text = "3.9",
-                        style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
-                        fontSize = 16.sp,
+                        text = appInfo.description,
+                        style = MaterialTheme.typography.bodyMedium.copy(color = TextSecondaryColor),
+                        fontSize = 12.sp,
                         maxLines = 1
                     )
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.Star,
+                            contentDescription = "Рейтинг",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = appInfo.mark, // ← просто строка "4,8" — БЕЗ %.1f!
+                            style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
+                            fontSize = 16.sp,
+                            maxLines = 1
+                        )
+                    }
                 }
             }
 
-            AppTheme {
-                InstallButton(
-                    apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link..."
-                )
+            // Кнопка установки
+            if (!appInfo?.cleanApkUrl.isNullOrBlank()) {
+                AppTheme {
+                    InstallButton(apkUrl = appInfo.cleanApkUrl)
+                }
+            } else {
+                Box(
+                    modifier = Modifier.size(80.dp, 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (appInfo == null) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
+                }
             }
-            //get button here
         }
     }
 }
