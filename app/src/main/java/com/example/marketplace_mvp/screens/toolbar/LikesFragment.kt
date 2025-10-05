@@ -21,6 +21,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
@@ -218,14 +219,16 @@ fun AppCard(
                     contentDescription = "${appInfo.name} icon",
                     modifier = Modifier
                         .size(60.dp)
-                        .background(PrimaryVariant, shape = RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(12.dp)) // 👈 this actually rounds the image itself
+                        .background(PrimaryVariant),       // optional background color
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
                     modifier = Modifier
                         .size(60.dp)
-                        .background(PrimaryVariant, shape = RoundedCornerShape(12.dp)),
+                        .clip(RoundedCornerShape(12.dp))   // 👈 also clip placeholder
+                        .background(PrimaryVariant),
                     contentAlignment = Alignment.Center
                 ) {
                     if (appInfo == null) {
