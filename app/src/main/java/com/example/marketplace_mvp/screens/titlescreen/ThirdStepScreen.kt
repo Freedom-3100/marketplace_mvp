@@ -57,7 +57,6 @@ fun ThirdStepOnboardingScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .clickable {
-                // Навигация при клике на экран
                 val appSettings = AppSettings(context)
                 appSettings.setFirstLaunchCompleted()
                 navController.navigate(R.id.action_thirdStepScreen2_to_fourthStepScreen2)

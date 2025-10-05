@@ -175,12 +175,11 @@ fun ApplicationCardScreen(
                     }
                 }
 
-                // --- Horizontally scrollable info section ---
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Rating + reviews
+
                     item {
                         InfoCard {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -207,7 +206,6 @@ fun ApplicationCardScreen(
                         }
                     }
 
-                    // Divider
                     item {
                         Box(
                             modifier = Modifier
@@ -217,7 +215,6 @@ fun ApplicationCardScreen(
                         )
                     }
 
-                    // Age rating
                     item {
                         InfoCard {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -238,7 +235,6 @@ fun ApplicationCardScreen(
                         )
                     }
 
-                    // Size
                     item {
                         InfoCard {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -257,7 +253,6 @@ fun ApplicationCardScreen(
                         )
                     }
 
-                    // Total Downloads
                     item {
                         InfoCard {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -268,10 +263,8 @@ fun ApplicationCardScreen(
                     }
                 }
 
-                // --- Install Button ---
                 InstallButton(apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link...  ")
 
-                // --- App Description ---
                 Text(
                     text = "Описание",
                     style = MaterialTheme.typography.bodyMedium,
@@ -301,7 +294,6 @@ fun ApplicationCardScreen(
     )
 }
 
-// --- InfoCard Composable ---
 @Composable
 fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
@@ -322,7 +314,7 @@ fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 fun ScreenshotSection(
-    screenshots: List<String>, // URLs or local resources
+    screenshots: List<String>,
     onScreenshotClick: (Int) -> Unit
 ) {
     Column {
@@ -369,7 +361,6 @@ fun FullscreenScreenshotViewer(
 ) {
     var currentIndex by remember { mutableStateOf(initialIndex) }
 
-    // Handle system back button
     BackHandler(enabled = true) {
         onDismiss()
     }
@@ -386,7 +377,7 @@ fun FullscreenScreenshotViewer(
                 .background(Color.Black),
             contentAlignment = Alignment.Center
         ) {
-            // Fullscreen image
+
             AsyncImage(
                 model = screenshots[currentIndex],
                 contentDescription = "Screenshot ${currentIndex + 1}",
@@ -394,7 +385,6 @@ fun FullscreenScreenshotViewer(
                 modifier = Modifier.fillMaxSize()
             )
 
-            // Left arrow
             if (currentIndex > 0) {
                 IconButton(
                     onClick = { currentIndex-- },
@@ -409,7 +399,6 @@ fun FullscreenScreenshotViewer(
                 }
             }
 
-            // Right arrow
             if (currentIndex < screenshots.lastIndex) {
                 IconButton(
                     onClick = { currentIndex++ },

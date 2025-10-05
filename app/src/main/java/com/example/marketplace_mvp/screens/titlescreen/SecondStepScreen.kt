@@ -68,7 +68,6 @@ fun SecondStepOnboardingScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .clickable {
-                // Навигация при клике на экран
                 val appSettings = AppSettings(context)
                 appSettings.setFirstLaunchCompleted()
                 navController.navigate(R.id.action_secondStepScreen2_to_thirdStepScreen2)
@@ -82,20 +81,18 @@ fun SecondStepOnboardingScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Картинка меньше и выше середины
             Image(
                 painter = painterResource(id = R.drawable.ic_launcher_foreground),
                 contentDescription = "welcome image",
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
-                    .height(220.dp) // Фиксированная высота вместо weight
+                    .height(220.dp)
                     .clip(MaterialTheme.shapes.medium),
                 contentScale = ContentScale.Crop
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Текст прямо под картинкой
             Text(
                 text = "Добро пожаловать в приложение RuStore!\nДавайте ознакомимся с интерфейсом.",
                 style = MaterialTheme.typography.bodyLarge,

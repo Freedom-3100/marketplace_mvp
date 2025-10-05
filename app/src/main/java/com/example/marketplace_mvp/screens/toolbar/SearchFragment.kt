@@ -44,17 +44,14 @@ class SearchFragment : Fragment(R.layout.search_fragment) {
     }
 }
 
-
-// 1. Category data class
 data class CategoryItem(
     val name: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector,
     val onClick: () -> Unit = {},
-    val cornerShape: RoundedCornerShape = RoundedCornerShape(5.dp), // default
-    val fontWeight: FontWeight = FontWeight.SemiBold // default weight
+    val cornerShape: RoundedCornerShape = RoundedCornerShape(5.dp),
+    val fontWeight: FontWeight = FontWeight.SemiBold
 )
 
-// 2. Horizontal button styled with theme
 @Composable
 fun CategoryButton(category: CategoryItem) {
     Row(
@@ -82,8 +79,6 @@ fun CategoryButton(category: CategoryItem) {
     }
 }
 
-
-// 3. Grid screen 2 columns × 6 rows
 @Composable
 fun CategoryGridScreen(
     categories1: List<CategoryItem>,
@@ -93,7 +88,6 @@ fun CategoryGridScreen(
     Column(
         modifier = Modifier.fillMaxWidth() // remove fillMaxSize
     ) {
-        // First section
         Text(
             text = "Игры",
             style = MaterialTheme.typography.titleLarge,
@@ -120,7 +114,6 @@ fun CategoryGridScreen(
             }
         }
 
-        // Second section
         Text(
             text = "Открыть каталог",
             style = MaterialTheme.typography.titleLarge,
@@ -152,20 +145,19 @@ fun CategoryGridScreen(
 
 @Composable
 fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem>, title: String) {
-    // Outer container with background
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .padding(bottom = 14.dp, start = 14.dp,end = 14.dp, top = 28.dp)
     ) {
-        // THIS COLUMN IS SCROLLABLE
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()) // <-- make entire content scrollable
+                .verticalScroll(rememberScrollState())
         ) {
-            // Page title
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLarge,
@@ -175,7 +167,6 @@ fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Category grid
             CategoryGridScreen(
                 categories1 = categories1,
                 categories2 = categories2,
@@ -187,9 +178,8 @@ fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem
 
 @Composable
 fun PreviewCategoryPage() {
-    // Wrap in your app theme so colors, typography, and shapes are applied
+
     AppTheme {
-        // Sample categories for preview
         val categories1 = listOf(
             CategoryItem(
                 name = "Экшен",
@@ -292,7 +282,6 @@ fun PreviewCategoryPage() {
             )
         )
 
-        // Call your styled page
         CategoryPage(
             categories1 = categories1,
             categories2 = categories2,

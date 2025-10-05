@@ -30,19 +30,16 @@ class MainActivity : AppCompatActivity() {
 
         appSettings = AppSettings(this)
 
-        // Получаем NavController
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.containerView) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Выбираем стартовый граф
         val graphId = if (appSettings.shouldShowFirstLaunch()) {
             R.navigation.nav_graph_onboarding
         } else {
             R.navigation.navigation_graph
         }
 
-        // Присваиваем выбранный граф сразу
         navController.setGraph(graphId, null)
     }
 }

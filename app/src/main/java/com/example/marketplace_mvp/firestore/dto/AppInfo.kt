@@ -12,7 +12,7 @@ data class AppInfo(
     val iconUrl: String = "",
     val apkUrl: String = ""
 ) {
-    // Геттеры для очистки URL (безопасные)
+
     val imageUrl: String
         get() = iconUrl.trim()
 

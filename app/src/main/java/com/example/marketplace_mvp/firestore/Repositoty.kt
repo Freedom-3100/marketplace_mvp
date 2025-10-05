@@ -8,9 +8,6 @@ class AppsRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    /**
-     * Получает список всех приложений из коллекции "apps"
-     */
     suspend fun getApps(): List<AppInfo> {
         return try {
             val result = db.collection("apps").get().await()
@@ -20,9 +17,6 @@ class AppsRepository(
         }
     }
 
-    /**
-     * Получает одно приложение по имени (точное совпадение)
-     */
     suspend fun getAppByName(name: String): AppInfo? {
         return try {
             val result = db.collection("apps")
@@ -36,9 +30,6 @@ class AppsRepository(
         }
     }
 
-    /**
-     * Получает список имён всех приложений (только поле "name")
-     */
     suspend fun getAllAppNames(): List<String> {
         return try {
             val result = db.collection("apps").get().await()

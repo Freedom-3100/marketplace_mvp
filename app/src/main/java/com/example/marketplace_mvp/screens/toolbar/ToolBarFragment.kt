@@ -13,7 +13,6 @@ class ToolBarFragment : Fragment(R.layout.tool_bar_fragment) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // Инициализируем BottomNavigationView
         val bottomNavigationView = view.findViewById<BottomNavigationView>(R.id.mainBottomNavigationView)
 
         val navController = (childFragmentManager.findFragmentById(R.id.mainContainerView) as NavHostFragment)

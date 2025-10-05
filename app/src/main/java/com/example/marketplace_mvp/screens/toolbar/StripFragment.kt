@@ -99,7 +99,6 @@ class StripFragment : Fragment(R.layout.strip_fragment) {
 
 @Composable
 fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) {
-    // Загружаем имена приложений при первом запуске
     LaunchedEffect(Unit) {
         viewModel.loadAllAppNames()
     }
@@ -113,14 +112,11 @@ fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) 
     )
     var selectedStripIndex by remember { mutableStateOf(0) }
 
-    // Scroll state for LazyColumn
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    // Используем реальные данные из ViewModel вместо моковых
     val filteredApps = remember(selectedStripIndex, appNames) {
-        // Здесь можно добавить логику фильтрации по категориям если нужно
-        // Пока просто возвращаем все приложения для всех категорий
+
         appNames
     }
 
@@ -129,7 +125,6 @@ fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) 
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        // Показываем индикатор загрузки если данные еще грузятся
         if (isLoading && appNames.isEmpty()) {
             CircularProgressIndicator(
                 modifier = Modifier
@@ -138,7 +133,6 @@ fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) 
             )
         }
 
-        // Показываем сообщение об ошибке если есть
         if (!message.isNullOrBlank()) {
             Text(
                 text = message!!,
@@ -153,7 +147,6 @@ fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) 
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            // --- Top Category Strip ---
             item {
                 LazyRow(
                     modifier = Modifier
@@ -168,7 +161,6 @@ fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) 
                             isSelected = index == selectedStripIndex,
                             onClick = {
                                 selectedStripIndex = index
-                                // Scroll to top when category changes
                                 scope.launch { listState.animateScrollToItem(0) }
                             }
                         )
@@ -176,7 +168,6 @@ fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) 
                 }
             }
 
-            // --- App cards ---
             if (filteredApps.isNotEmpty()) {
                 items(filteredApps) { appName ->
                     AppCard(

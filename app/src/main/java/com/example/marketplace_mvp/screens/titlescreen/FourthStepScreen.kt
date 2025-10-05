@@ -60,10 +60,8 @@ fun FourthStepOnboardingScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .clickable {
-                // Сохраняем, что онбординг пройден
                 AppSettings(context).setFirstLaunchCompleted()
 
-                // Меняем граф на основной
                 navController.setGraph(R.navigation.navigation_graph)
             }
             .background(MaterialTheme.colorScheme.background)

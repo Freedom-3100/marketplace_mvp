@@ -138,7 +138,7 @@ fun LikesScreen(navController: NavController, viewModel: AppsViewModel) {
         AppCategories(
             navController = navController,
             appNames = appNames,
-            viewModel = viewModel // ← передаём ViewModel вниз
+            viewModel = viewModel
         )
     }
 }
@@ -241,7 +241,6 @@ fun AppCard(
 ) {
     val appInfo = viewModel.cachedApps[appName]
 
-    // Ленивая загрузка полных данных
     LaunchedEffect(appName) {
         viewModel.loadAppInfoByName(appName)
     }
@@ -255,7 +254,7 @@ fun AppCard(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 12.dp)
         ) {
-            // Изображение
+
             if (!appInfo?.imageUrl.isNullOrBlank()) {
                 AsyncImage(
                     model = appInfo.imageUrl,
@@ -283,7 +282,6 @@ fun AppCard(
                 }
             }
 
-            // Текст
             Column(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
@@ -322,8 +320,6 @@ fun AppCard(
                     }
                 }
             }
-
-            // Кнопка установки
             if (!appInfo?.cleanApkUrl.isNullOrBlank()) {
                 AppTheme {
                     InstallButton(apkUrl = appInfo.cleanApkUrl)
