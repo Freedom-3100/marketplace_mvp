@@ -1,10 +1,13 @@
 package com.example.marketplace_mvp.ui.components
 
+import android.annotation.SuppressLint
+import android.app.DownloadManager
 import android.app.PendingIntent
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageInstaller
 import android.net.Uri
 import android.os.Build
@@ -25,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,14 +45,13 @@ fun InstallButton(
     buttonText: String = "Скачать",
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
 
     Button(
         onClick = {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
                 !context.packageManager.canRequestPackageInstalls()
             ) {
-                // Open settings for unknown app installs
+                // Открываем настройки "Неизвестные источники"
                 try {
                     val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES).apply {
                         data = "package:${context.packageName}".toUri()
@@ -58,17 +61,15 @@ fun InstallButton(
                     e.printStackTrace()
                 }
             } else {
-                // Download and install APK
-                scope.launch {
-                    downloadAndInstallApk(context, apkUrl)
-                }
+                // Скачиваем APK
+                downloadAndInstallApk(context, apkUrl)
             }
         },
         modifier = Modifier
             .padding(end = 16.dp)
-            .height(36.dp) // 👈 smaller height
-            .defaultMinSize(minWidth = 80.dp), // 👈 optional width control
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), // 👈 tighter padding
+            .height(36.dp)
+            .defaultMinSize(minWidth = 80.dp),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Text(
             text = buttonText,
@@ -78,64 +79,71 @@ fun InstallButton(
     }
 }
 
+@SuppressLint("Range")
 private fun downloadAndInstallApk(context: Context, url: String) {
-    CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val connection = URL(url).openConnection() as HttpURLConnection
-            connection.connect()
-            val file = File(
-                context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-                "app_update.apk"
-            )
-            val output = FileOutputStream(file)
-            connection.inputStream.use { input ->
-                output.use { out -> input.copyTo(out) }
-            }
+    val request = DownloadManager.Request(Uri.parse(url))
+        .setTitle("Загрузка обновления")
+        .setDescription("Пожалуйста, подождите…")
+        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "app_update.apk")
+        .setMimeType("application/vnd.android.package-archive")
+        .setAllowedOverMetered(true)
+        .setAllowedOverRoaming(true)
 
-            // Trigger install on main thread
-            CoroutineScope(Dispatchers.Main).launch {
-                installApk(context, file)
+    val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val downloadId = dm.enqueue(request)
+
+    val onComplete = object : BroadcastReceiver() {
+        override fun onReceive(ctx: Context?, intent: Intent?) {
+            val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            if (id == downloadId) {
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = dm.query(query)
+
+                if (cursor.moveToFirst()) {
+                    val status = cursor.getInt(cursor.getColumnIndex(DownloadManager.COLUMN_STATUS))
+                    if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                        val localUri = cursor.getString(cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI))
+                        if (localUri != null) {
+                            val apkFile = File(Uri.parse(localUri).path!!)
+                            installApk(context, apkFile)
+                        } else {
+                            Log.e("Installer", "Local URI is null")
+                        }
+                    } else {
+                        Log.e("Installer", "Download failed with status=$status")
+                    }
+                }
+                cursor.close()
+                context.unregisterReceiver(this)
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
+
+    ContextCompat.registerReceiver(
+        context,
+        onComplete,
+        IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+        ContextCompat.RECEIVER_NOT_EXPORTED
+    )
 }
 
 private fun installApk(context: Context, apkFile: File) {
-    val packageInstaller = context.packageManager.packageInstaller
-    val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
-    val sessionId = packageInstaller.createSession(params)
-    val session = packageInstaller.openSession(sessionId)
+    val apkUri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        apkFile
+    )
 
-    // Copy the APK into the session
-    apkFile.inputStream().use { input ->
-        session.openWrite("app_install", 0, -1).use { output ->
-            input.copyTo(output)
-            session.fsync(output)
-        }
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(apkUri, "application/vnd.android.package-archive")
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
 
-    // Create an Intent to get installation result
-    val intent = Intent(context, InstallResultReceiver::class.java)
-    val pendingIntent = PendingIntent.getBroadcast(
-        context,
-        0,
-        intent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-    session.commit(pendingIntent.intentSender)
-    session.close()
-}
-
-class InstallResultReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        val status = intent.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE)
-        val message = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE)
-        if (status == PackageInstaller.STATUS_SUCCESS) {
-            Log.d("Installer", "Installation succeeded!")
-        } else {
-            Log.e("Installer", "Installation failed: $message")
-        }
+    try {
+        context.startActivity(intent)
+    } catch (e: ActivityNotFoundException) {
+        Log.e("Installer", "No activity found to handle APK install", e)
     }
 }
