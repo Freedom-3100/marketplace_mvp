@@ -84,8 +84,13 @@ class StripFragment : Fragment(R.layout.strip_fragment) {
         return ComposeView(requireContext()).apply {
             setContent {
                 AppTheme {
-                    val navController = findNavController()
-                    StripWithAppsScreen(navController = navController, viewModel = viewModel)
+                    val navController = (activity as? AppCompatActivity)
+                        ?.supportFragmentManager
+                        ?.findFragmentById(R.id.containerView)
+                        ?.findNavController()
+                    navController?.let {
+                        StripWithAppsScreen(navController = it, viewModel)
+                    }
                 }
             }
         }
