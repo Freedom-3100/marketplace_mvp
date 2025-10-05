@@ -10,6 +10,7 @@ data class AppInfo(
     val ageRating: String = "",
     val mark: String = "0",
     val iconUrl: String = "",
+    val screenshots: List<String> = emptyList(),
     val apkUrl: String = ""
 ) {
 
