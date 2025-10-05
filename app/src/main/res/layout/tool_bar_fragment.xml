@@ -21,8 +21,15 @@
         android:id="@+id/mainBottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/surface_color"
         app:menu="@menu/lower_bottom_menu"
+        app:itemIconTint="@color/nav_item_colors"
+        app:itemTextColor="@color/nav_item_colors"
+        app:itemRippleColor="@color/primary_color"
+        app:itemBackground="@drawable/bottom_nav_active_background"
+        app:labelVisibilityMode="labeled"
+        android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/mainContainerView"/>
+        app:layout_constraintTop_toBottomOf="@id/mainContainerView"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
