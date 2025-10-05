@@ -64,7 +64,11 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-
+    implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("com.google.firebase:firebase-firestore-ktx:25.1.4")
     implementation("com.google.firebase:firebase-storage-ktx:21.0.2")
+    // Core icons (basic ones like Menu, Add, etc.)
+    implementation("androidx.compose.material:material-icons-core:1.7.8")
+    // Extended icons (includes ScubaDiving, etc.)
+    implementation("androidx.compose.material:material-icons-extended:1.7.8")
 }
