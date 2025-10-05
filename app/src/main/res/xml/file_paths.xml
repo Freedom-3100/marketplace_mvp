@@ -1,0 +1,3 @@
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="downloaded_apk" path="Android/data/your.package.name/files/Download/" />
+</paths>

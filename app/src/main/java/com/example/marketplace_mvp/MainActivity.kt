@@ -11,13 +11,13 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
 import androidx.navigation.fragment.NavHostFragment
-import com.example.marketplace_mvp.databinding.ActivityMainBinding
 import androidx.core.content.edit
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph
 import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import com.example.marketplace_mvp.R
+
 
 
 class MainActivity : AppCompatActivity() {
@@ -57,3 +57,7 @@ class AppSettings(private val context: Context) {
         sharedPref.edit { putBoolean("first_launch", false) }
     }
 }
+
+
+
+
