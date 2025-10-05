@@ -33,11 +33,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,17 +48,22 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
+import coil.compose.AsyncImage
 import com.example.marketplace_mvp.R
+import com.example.marketplace_mvp.firestore.AppsViewModel
 import com.example.marketplace_mvp.ui.components.InstallButton
 import com.example.marketplace_mvp.ui.theme.AppTheme
 import com.example.marketplace_mvp.ui.theme.PrimaryVariant
@@ -64,7 +72,9 @@ import com.example.marketplace_mvp.ui.theme.TextSecondaryColor
 import kotlinx.coroutines.launch
 import kotlin.collections.forEach
 
-class StripFragment : Fragment() {
+class StripFragment : Fragment(R.layout.strip_fragment) {
+
+    private val viewModel: AppsViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -74,14 +84,8 @@ class StripFragment : Fragment() {
         return ComposeView(requireContext()).apply {
             setContent {
                 AppTheme {
-                    val navController = (activity as? AppCompatActivity)
-                        ?.supportFragmentManager
-                        ?.findFragmentById(R.id.containerView)
-                        ?.findNavController()
-
-                    navController?.let {
-                        StripWithAppsScreen(navController = it)
-                    }
+                    val navController = findNavController()
+                    StripWithAppsScreen(navController = navController, viewModel = viewModel)
                 }
             }
         }
@@ -89,7 +93,16 @@ class StripFragment : Fragment() {
 }
 
 @Composable
-fun StripWithAppsScreen(navController: NavController) {
+fun StripWithAppsScreen(navController: NavController, viewModel: AppsViewModel) {
+    // Загружаем имена приложений при первом запуске
+    LaunchedEffect(Unit) {
+        viewModel.loadAllAppNames()
+    }
+
+    val appNames by viewModel.appNames.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val message by viewModel.message.collectAsState()
+
     val stripButtons = listOf(
         "Все", "Новинки", "Популярное", "Рекомендуем", "Акции", "Хиты"
     )
@@ -99,44 +112,89 @@ fun StripWithAppsScreen(navController: NavController) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    // Generate apps for the selected category
-    val apps = remember(selectedStripIndex) {
-        List(15) { "${stripButtons[selectedStripIndex]} App $it" }
+    // Используем реальные данные из ViewModel вместо моковых
+    val filteredApps = remember(selectedStripIndex, appNames) {
+        // Здесь можно добавить логику фильтрации по категориям если нужно
+        // Пока просто возвращаем все приложения для всех категорий
+        appNames
     }
 
-    LazyColumn(
-        state = listState,
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(horizontal = 14.dp)
     ) {
-        // --- Top Category Strip ---
-        item {
-            LazyRow(
+        // Показываем индикатор загрузки если данные еще грузятся
+        if (isLoading && appNames.isEmpty()) {
+            CircularProgressIndicator(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 28.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                itemsIndexed(stripButtons) { index, text ->
-                    CategoryButton(
-                        text = text,
-                        isSelected = index == selectedStripIndex,
-                        onClick = {
-                            selectedStripIndex = index
-                            // Scroll to top when category changes
-                            scope.launch { listState.animateScrollToItem(0) }
-                        }
+                    .align(Alignment.CenterHorizontally)
+                    .padding(16.dp)
+            )
+        }
+
+        // Показываем сообщение об ошибке если есть
+        if (!message.isNullOrBlank()) {
+            Text(
+                text = message!!,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            // --- Top Category Strip ---
+            item {
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 28.dp),
+                    contentPadding = PaddingValues(horizontal = 14.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    itemsIndexed(stripButtons) { index, text ->
+                        CategoryButton(
+                            text = text,
+                            isSelected = index == selectedStripIndex,
+                            onClick = {
+                                selectedStripIndex = index
+                                // Scroll to top when category changes
+                                scope.launch { listState.animateScrollToItem(0) }
+                            }
+                        )
+                    }
+                }
+            }
+
+            // --- App cards ---
+            if (filteredApps.isNotEmpty()) {
+                items(filteredApps) { appName ->
+                    AppCard(
+                        appName = appName,
+                        navController = navController,
+                        viewModel = viewModel,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 4.dp)
+                    )
+                }
+            } else if (!isLoading) {
+                item {
+                    Text(
+                        text = "Приложения не найдены",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        textAlign = TextAlign.Center,
+                        color = TextSecondaryColor
                     )
                 }
             }
-        }
-
-        // --- App cards ---
-        items(apps) { appName ->
-            AppCard(appName = appName, navController = navController)
         }
     }
 }
@@ -147,11 +205,8 @@ fun CategoryButton(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val context = LocalContext.current
     Button(
-        onClick = {
-            onClick()
-        },
+        onClick = onClick,
         shape = RoundedCornerShape(24.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = if (isSelected)
@@ -172,80 +227,4 @@ fun CategoryButton(
         )
     }
 }
-
-@Composable
-fun AppCard(appName: String, navController: NavController) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { navController.navigate(R.id.applicationCard) },
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .background(PrimaryVariant, shape = RoundedCornerShape(12.dp)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "📱", fontSize = 24.sp)
-            }
-            Column(
-                verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .padding(start = 10.dp)
-                    .weight(1f)
-            ) {
-                Text(
-                    text = appName,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-                Text(
-                    text = appName,
-                    style = MaterialTheme.typography.bodyLarge.copy(color = TextSecondaryColor),
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    modifier = Modifier.padding(bottom = 2.dp)
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "star icon",
-                        tint = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.size(16.dp),
-                    )
-                    Text(
-                        text = "3.9",
-                        style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
-                        fontSize = 16.sp,
-                        maxLines = 1
-                    )
-                }
-            }
-
-            AppTheme {
-                InstallButton(
-                    apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link..."
-                )
-            }
-            //get button here
-        }
-    }
-}
-
-
-
-
-
-
-
-
 
