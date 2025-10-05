@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +41,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -61,23 +65,36 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.viewModels
 import com.example.marketplace_mvp.R
 import com.example.marketplace_mvp.ui.components.InstallButton
 import com.example.marketplace_mvp.ui.theme.AppTheme
 import com.example.marketplace_mvp.ui.theme.TextColor
 import coil.compose.AsyncImage
+import com.example.marketplace_mvp.firestore.AppsViewModel
 
-class ApplicationCard: Fragment() {
+class ApplicationCard : Fragment() {
+
+    private val viewModel: AppsViewModel by viewModels()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        val appName = arguments?.getString("appName") ?: "Sample App"
+
+        // Подгружаем данные приложения
+        viewModel.loadAppInfoByName(appName)
+
         return ComposeView(requireContext()).apply {
             setContent {
                 AppTheme {
-                    ApplicationCardScreen(requireActivity())
+                    ApplicationCardScreen(
+                        activity = requireActivity(),
+                        appName = appName,
+                        viewModel = viewModel
+                    )
                 }
             }
         }
@@ -88,43 +105,31 @@ class ApplicationCard: Fragment() {
 @Composable
 fun ApplicationCardScreen(
     activity: FragmentActivity,
-    appName: String = "Sample App",
-    publisher: String = "Sample Publisher",
-    inAppPurchases: Boolean = true,
-    rating: Float = 3.9f,
-    reviewsCount: Int = 1200,
-    ageRating: String = "12+",
-    sizeInGb: String = "1.2 GB",
-    totalDownloads: String = "1M+",
+    appName: String,
+    viewModel: AppsViewModel
 ) {
+    // Берем данные из ViewModel
+    val appInfo by remember { derivedStateOf { viewModel.cachedApps[appName] } }
 
-    val screenshots = listOf(
+    var showFullscreen by remember { mutableStateOf(false) }
+    var selectedScreenshot by remember { mutableStateOf(0) }
+
+    // Если скриншоты не хранятся в модели, используем заглушки
+    val screenshots = appInfo?.screenshots ?: listOf(
         "https://via.placeholder.com/400x800.png?text=Screenshot+1",
         "https://via.placeholder.com/400x800.png?text=Screenshot+2",
         "https://via.placeholder.com/400x800.png?text=Screenshot+3"
     )
 
-    var showFullscreen by remember { mutableStateOf(false) }
-    var selectedScreenshot by remember { mutableStateOf(0) }
-
-
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(appName) },
+                title = { Text(appInfo?.name ?: appName) },
                 navigationIcon = {
                     IconButton(onClick = { activity.onBackPressedDispatcher.onBackPressed() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                )
+                }
             )
         },
         content = { innerPadding ->
@@ -133,11 +138,9 @@ fun ApplicationCardScreen(
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
                     .padding(innerPadding)
-                    .background(MaterialTheme.colorScheme.background)
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-
                 // --- Header Section ---
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -149,134 +152,58 @@ fun ApplicationCardScreen(
                             .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("📱", fontSize = 32.sp)
+                        if (!appInfo?.imageUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = appInfo!!.imageUrl,
+                                contentDescription = "${appInfo!!.name} icon",
+                                modifier = Modifier.size(60.dp),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Text("📱", fontSize = 32.sp)
+                        }
                     }
 
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(
-                            text = appName,
+                            text = appInfo?.name ?: appName,
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.SemiBold
                         )
                         Text(
-                            text = publisher,
+                            text = appInfo?.creator ?: "Unknown Publisher",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondary,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.SemiBold
                         )
-                        if (inAppPurchases) {
-                            Text(
-                                text = "Contains in-app purchases",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondary,
-                            )
-                        }
+                        // Здесь можно добавить info о покупках, если нужно
                     }
                 }
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-
-                    item {
-                        InfoCard {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Row(verticalAlignment = Alignment.CenterVertically,) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Star,
-                                        contentDescription = "star icon",
-                                        tint = MaterialTheme.colorScheme.onPrimary,
-                                        modifier = Modifier.size(16.dp),
-                                    )
-                                    Text(
-                                        text = "$rating",
-                                        style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
-                                        fontSize = 16.sp,
-                                        maxLines = 1
-                                    )
-                                }
-                                Text(
-                                    text = "$reviewsCount reviews",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondary,
-                                )
-                            }
-                        }
-                    }
-
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(80.dp)
-                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f))
-                        )
-                    }
-
-                    item {
-                        InfoCard {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Age",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSecondary,)
-                                Text(ageRating, style = MaterialTheme.typography.bodyLarge)
-                            }
-                        }
-                    }
-
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(80.dp)
-                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f))
-                        )
-                    }
-
-                    item {
-                        InfoCard {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Size", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
-                                Text(sizeInGb, style = MaterialTheme.typography.bodyLarge)
-                            }
-                        }
-                    }
-
-                    item {
-                        Box(
-                            modifier = Modifier
-                                .width(1.dp)
-                                .height(80.dp)
-                                .background(MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f))
-                        )
-                    }
-
-                    item {
-                        InfoCard {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Downloads", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f))
-                                Text(totalDownloads, style = MaterialTheme.typography.bodyLarge)
-                            }
-                        }
-                    }
+                // --- Info Cards ---
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    item { InfoCard { RatingCard(appInfo?.mark ?: "0", 0) } } // reviewsCount можно добавить, если есть
+                    item { DividerCard() }
+                    item { InfoCard { TextInfo("Age", appInfo?.ageRating ?: "12+") } }
+                    item { DividerCard() }
+                    item { InfoCard { TextInfo("Size", appInfo?.size ?: "1.2 GB") } }
+                    item { DividerCard() }
+                    item { InfoCard { TextInfo("Downloads", appInfo?.downloads ?: "1M+") } }
                 }
 
-                InstallButton(apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link...  ")
+                // --- Install Button ---
+                if (!appInfo?.cleanApkUrl.isNullOrBlank()) {
+                    InstallButton(apkUrl = appInfo!!.cleanApkUrl)
+                }
 
+                // --- Description ---
+                Text("Описание", style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    text = "Описание",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "This is a detailed description of the application. You can show features, screenshots, and other relevant info here.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground
+                    text = appInfo?.description
+                        ?: "This is a detailed description of the application. You can show features, screenshots, and other relevant info here.",
+                    style = MaterialTheme.typography.bodySmall
                 )
 
-                ScreenshotSection(screenshots = screenshots) { index ->
+                ScreenshotSection(screenshots) { index ->
                     selectedScreenshot = index
                     showFullscreen = true
                 }
@@ -294,14 +221,12 @@ fun ApplicationCardScreen(
     )
 }
 
+// --- Info Cards and Screenshots (оставляем как раньше) ---
 @Composable
 fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
-        modifier = Modifier
-            .width(100.dp)
-            .height(80.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
+        modifier = Modifier.width(100.dp).height(80.dp),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(8.dp),
@@ -312,23 +237,41 @@ fun InfoCard(content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-@Composable
-fun ScreenshotSection(
-    screenshots: List<String>,
-    onScreenshotClick: (Int) -> Unit
-) {
-    Column {
-        Text(
-            text = "Скриншоты",
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+@Composable
+fun RatingCard(mark: String, reviewsCount: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Star, contentDescription = "star icon", modifier = Modifier.size(16.dp))
+            Text(mark, fontSize = 16.sp, color = TextColor)
+        }
+        Text("$reviewsCount reviews", style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+fun TextInfo(title: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(title, style = MaterialTheme.typography.bodySmall)
+        Text(value, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+fun DividerCard() {
+    Box(
+        modifier = Modifier
+            .width(1.dp)
+            .height(80.dp)
+            .background(Color.Gray.copy(alpha = 0.2f))
+    )
+}
+
+@Composable
+fun ScreenshotSection(screenshots: List<String>, onScreenshotClick: (Int) -> Unit) {
+    Column {
+        Text("Скриншоты", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             itemsIndexed(screenshots) { index, screenshotUrl ->
                 Box(
                     modifier = Modifier
@@ -343,8 +286,8 @@ fun ScreenshotSection(
                         contentDescription = "Screenshot ${index + 1}",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize(),
-                        placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant), // light gray background
-                        error = ColorPainter(MaterialTheme.colorScheme.error) // red if failed
+                        placeholder = ColorPainter(MaterialTheme.colorScheme.surfaceVariant),
+                        error = ColorPainter(MaterialTheme.colorScheme.error)
                     )
                 }
             }
@@ -360,56 +303,33 @@ fun FullscreenScreenshotViewer(
     onDismiss: () -> Unit
 ) {
     var currentIndex by remember { mutableStateOf(initialIndex) }
-
-    BackHandler(enabled = true) {
-        onDismiss()
-    }
+    BackHandler(enabled = true) { onDismiss() }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false // fullscreen
-        )
+        properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black),
-            contentAlignment = Alignment.Center
-        ) {
-
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) {
             AsyncImage(
                 model = screenshots[currentIndex],
                 contentDescription = "Screenshot ${currentIndex + 1}",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize()
             )
-
             if (currentIndex > 0) {
                 IconButton(
                     onClick = { currentIndex-- },
                     modifier = Modifier.align(Alignment.CenterStart).padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Previous",
-                        tint = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    )
+                    Icon(Icons.Filled.ArrowBack, contentDescription = "Previous", tint = Color.White, modifier = Modifier.size(48.dp))
                 }
             }
-
             if (currentIndex < screenshots.lastIndex) {
                 IconButton(
                     onClick = { currentIndex++ },
                     modifier = Modifier.align(Alignment.CenterEnd).padding(16.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Next",
-                        tint = Color.White,
-                        modifier = Modifier.size(48.dp)
-                    )
+                    Icon(Icons.Filled.ArrowForward, contentDescription = "Next", tint = Color.White, modifier = Modifier.size(48.dp))
                 }
             }
         }

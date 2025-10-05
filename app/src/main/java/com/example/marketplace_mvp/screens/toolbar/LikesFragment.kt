@@ -1,6 +1,6 @@
 package com.example.marketplace_mvp.screens.toolbar
 
-import android.R.attr.category
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -8,81 +8,37 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFrom
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowRight
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.provider.FontsContractCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
-import com.example.marketplace_mvp.MainActivity
-import com.example.marketplace_mvp.R
-import com.example.marketplace_mvp.ui.theme.AppTheme
-import com.example.marketplace_mvp.ui.theme.BackgroundColor
-import com.example.marketplace_mvp.ui.theme.PrimaryVariant
-import com.example.marketplace_mvp.ui.theme.SurfaceColor
-import com.example.marketplace_mvp.ui.theme.TextColor
-import com.example.marketplace_mvp.ui.theme.TextSecondaryColor
-import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.Favorite
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.material3.*
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import com.example.marketplace_mvp.firestore.AppsViewModel
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.fragment.app.viewModels
 import coil.compose.AsyncImage
+import com.example.marketplace_mvp.R
+import com.example.marketplace_mvp.firestore.AppsViewModel
 import com.example.marketplace_mvp.ui.components.InstallButton
-
-data class Category(
-    val name: String,
-    val icon: ImageVector
-)
+import com.example.marketplace_mvp.ui.theme.*
+import kotlinx.coroutines.launch
 
 class LikesFragment : Fragment(R.layout.likes_fragment) {
 
@@ -100,10 +56,10 @@ class LikesFragment : Fragment(R.layout.likes_fragment) {
                         ?.supportFragmentManager
                         ?.findFragmentById(R.id.containerView)
                         ?.findNavController()
+
                     navController?.let {
                         LikesScreen(navController = it, viewModel)
                     }
-
                 }
             }
         }
@@ -113,7 +69,7 @@ class LikesFragment : Fragment(R.layout.likes_fragment) {
 @Composable
 fun LikesScreen(navController: NavController, viewModel: AppsViewModel) {
     LaunchedEffect(Unit) {
-        viewModel.loadAllAppNames() // ← только имена
+        viewModel.loadAllAppNames()
     }
 
     val appNames by viewModel.appNames.collectAsState()
@@ -127,7 +83,9 @@ fun LikesScreen(navController: NavController, viewModel: AppsViewModel) {
     ) {
         if (isLoading && appNames.isEmpty()) {
             CircularProgressIndicator(
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(16.dp)
+                modifier = Modifier
+                    .align(Alignment.CenterHorizontally)
+                    .padding(16.dp)
             )
         }
 
@@ -195,12 +153,10 @@ fun CategorySection(
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontWeight = FontWeight.SemiBold,
             )
-            IconButton(
-                onClick = {
-                    val next = (listState.firstVisibleItemIndex + 1).coerceAtMost(appGroups.lastIndex)
-                    scope.launch { listState.animateScrollToItem(next) }
-                }
-            ) {
+            IconButton(onClick = {
+                val next = (listState.firstVisibleItemIndex + 1).coerceAtMost(appGroups.lastIndex)
+                scope.launch { listState.animateScrollToItem(next) }
+            }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
                     contentDescription = "Прокрутить",
@@ -222,7 +178,7 @@ fun CategorySection(
                         AppCard(
                             appName = appName,
                             navController = navController,
-                            viewModel = viewModel, // ← передаём ViewModel
+                            viewModel = viewModel,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -246,15 +202,16 @@ fun AppCard(
     }
 
     Card(
-        modifier = modifier
-            .clickable { navController.navigate(R.id.applicationCard)},
+        modifier = modifier.clickable {
+            val bundle = Bundle().apply { putString("appName", appName) }
+            navController.navigate(R.id.applicationCard, bundle)
+        },
         colors = CardDefaults.cardColors(containerColor = BackgroundColor)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 12.dp)
         ) {
-
             if (!appInfo?.imageUrl.isNullOrBlank()) {
                 AsyncImage(
                     model = appInfo.imageUrl,
@@ -272,10 +229,7 @@ fun AppCard(
                     contentAlignment = Alignment.Center
                 ) {
                     if (appInfo == null) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            strokeWidth = 2.dp
-                        )
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     } else {
                         Text(text = "📱", fontSize = 24.sp)
                     }
@@ -312,7 +266,7 @@ fun AppCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = appInfo.mark, // ← просто строка "4,8" — БЕЗ %.1f!
+                            text = appInfo.mark,
                             style = MaterialTheme.typography.bodyLarge.copy(color = TextColor),
                             fontSize = 16.sp,
                             maxLines = 1
@@ -320,10 +274,9 @@ fun AppCard(
                     }
                 }
             }
+
             if (!appInfo?.cleanApkUrl.isNullOrBlank()) {
-                AppTheme {
-                    InstallButton(apkUrl = appInfo.cleanApkUrl)
-                }
+                AppTheme { InstallButton(apkUrl = appInfo.cleanApkUrl) }
             } else {
                 Box(
                     modifier = Modifier.size(80.dp, 40.dp),
@@ -339,4 +292,4 @@ fun AppCard(
             }
         }
     }
-} 
+}
