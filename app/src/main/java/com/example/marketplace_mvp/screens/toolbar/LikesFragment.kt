@@ -96,8 +96,14 @@ class LikesFragment : Fragment(R.layout.likes_fragment) {
         return ComposeView(requireContext()).apply {
             setContent {
                 AppTheme {
-                    val navController = findNavController()
-                    LikesScreen(navController, viewModel) // ← передаём ViewModel
+                    val navController = (activity as? AppCompatActivity)
+                        ?.supportFragmentManager
+                        ?.findFragmentById(R.id.containerView)
+                        ?.findNavController()
+                    navController?.let {
+                        LikesScreen(navController = it, viewModel)
+                    }
+
                 }
             }
         }
@@ -242,7 +248,7 @@ fun AppCard(
 
     Card(
         modifier = modifier
-            .clickable { /* опционально */ },
+            .clickable { navController.navigate(R.id.applicationCard)},
         colors = CardDefaults.cardColors(containerColor = BackgroundColor)
     ) {
         Row(
@@ -337,4 +343,4 @@ fun AppCard(
             }
         }
     }
-}
+} 
