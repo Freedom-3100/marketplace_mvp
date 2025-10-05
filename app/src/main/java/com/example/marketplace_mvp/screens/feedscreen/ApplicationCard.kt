@@ -1,5 +1,4 @@
 package com.example.marketplace_mvp.screens.feedscreen
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -270,7 +269,7 @@ fun ApplicationCardScreen(
                 }
 
                 // --- Install Button ---
-                InstallButton(apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link...")
+                InstallButton(apkUrl = "https://firebasestorage.googleapis.com/...your_apk_link...  ")
 
                 // --- App Description ---
                 Text(
@@ -427,5 +426,3 @@ fun FullscreenScreenshotViewer(
         }
     }
 }
-
-

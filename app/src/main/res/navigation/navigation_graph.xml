@@ -20,7 +20,6 @@
         android:name="com.example.marketplace_mvp.screens.feedscreen.ApplicationCard"
         tools:layout="@layout/application_card"
         android:label="ApplicationCard">
-
     </fragment>
 
 </navigation>

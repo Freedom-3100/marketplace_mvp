@@ -8,9 +8,9 @@ data class AppInfo(
     val downloads: String = "",
     val size: String = "",
     val ageRating: String = "",
-    val mark: String = "0",        // ← остаётся строкой: "4,8"
-    val iconUrl: String = "",      // ← может содержать пробелы
-    val apkUrl: String = ""        // ← может содержать пробелы
+    val mark: String = "0",
+    val iconUrl: String = "",
+    val apkUrl: String = ""
 ) {
     // Геттеры для очистки URL (безопасные)
     val imageUrl: String
