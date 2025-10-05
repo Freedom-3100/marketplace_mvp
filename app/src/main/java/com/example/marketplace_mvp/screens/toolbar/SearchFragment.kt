@@ -24,36 +24,340 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import com.example.marketplace_mvp.R
+import com.example.marketplace_mvp.firestore.AppsViewModel
 
 class SearchFragment : Fragment(R.layout.search_fragment) {
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        return ComposeView(requireContext()).apply {
-            setContent {
-                PreviewCategoryPage()
+    private val viewModel: AppsViewModel by viewModels()
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val composeView = view as? ComposeView
+        composeView?.setContent {
+            AppTheme {
+                SearchScreen(viewModel = viewModel)
+            }
+        }
+
+        // Load initial data
+        viewModel.loadApps()
+    }
+}
+
+private fun AppsViewModel.loadApps() {
+    TODO("Not yet implemented")
+}
+
+@Composable
+fun SearchScreen(viewModel: AppsViewModel) {
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState()
+    val isSearching by viewModel.isSearching.collectAsState()
+    val apps by viewModel.apps.collectAsState()
+
+    // Sample categories (you might want to move this to ViewModel)
+    val categories1 = remember {
+        listOf(
+            CategoryItem(
+                name = "Экшен",
+                icon = Icons.Filled.ScubaDiving,
+                onClick = { /* Navigate to action games */ },
+                fontWeight = FontWeight.SemiBold,
+                cornerShape = RoundedCornerShape(topStart = 15.dp, topEnd = 5.dp, bottomStart = 5.dp, bottomEnd = 5.dp)
+            ),
+            // ... your other categories ...
+            CategoryItem(
+                name = "Настольные",
+                icon = Icons.Filled.TableRestaurant,
+                onClick = { /* Navigate to board games */ },
+                fontWeight = FontWeight.SemiBold,
+                cornerShape = RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp, bottomStart = 5.dp, bottomEnd = 15.dp)
+            )
+        )
+    }
+
+    val categories2 = remember {
+        listOf(
+            CategoryItem(
+                name = "Развлечения",
+                icon = Icons.Filled.Festival,
+                onClick = { /* Navigate to entertainment */ },
+                fontWeight = FontWeight.SemiBold,
+                cornerShape = RoundedCornerShape(topStart = 15.dp, topEnd = 5.dp, bottomStart = 5.dp, bottomEnd = 5.dp)
+            ),
+            // ... your other categories ...
+            CategoryItem(
+                name = "Фотография",
+                icon = Icons.Filled.PhotoCamera,
+                onClick = { /* Navigate to photography */ },
+                fontWeight = FontWeight.SemiBold,
+                cornerShape = RoundedCornerShape(topStart = 5.dp, topEnd = 5.dp, bottomStart = 5.dp, bottomEnd = 15.dp)
+            )
+        )
+    }
+
+    // Show search results or categories based on search state
+    if (searchQuery.isNotEmpty()) {
+        SearchResultsScreen(
+            searchQuery = searchQuery,
+            searchResults = searchResults,
+            isSearching = isSearching,
+            onSearchQueryChange = { viewModel.searchApps(it) },
+            onClearSearch = { viewModel.clearSearch() }
+        )
+    } else {
+        CategoryPage(
+            categories1 = categories1,
+            categories2 = categories2,
+            title = "Каталог",
+            onSearchQueryChange = { viewModel.searchApps(it) }
+        )
+    }
+}
+
+@Composable
+fun SearchResultsScreen(
+    searchQuery: String,
+    searchResults: List<AppInfo>,
+    isSearching: Boolean,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(14.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Search Bar
+            SearchBar(
+                searchQuery = searchQuery,
+                onSearchQueryChange = onSearchQueryChange,
+                onClearSearch = onClearSearch,
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            // Search Results Title
+            Text(
+                text = "Результаты поиска: \"$searchQuery\"",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
+            when {
+                isSearching -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .padding(32.dp)
+                    )
+                }
+                searchResults.isEmpty() -> {
+                    Text(
+                        text = "Ничего не найдено",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
+                else -> {
+                    // Display search results
+                    LazyColumn {
+                        items(searchResults) { app ->
+                            AppSearchResultItem(app = app)
+                        }
+                    }
+                }
             }
         }
     }
 }
 
+@Composable
+fun AppSearchResultItem(app: AppInfo) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { /* Handle app click - navigate to details */ },
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // App icon - you can use Coil or similar for image loading
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = app.name.take(2).uppercase(),
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
-// 1. Category data class
-data class CategoryItem(
-    val name: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector,
-    val onClick: () -> Unit = {},
-    val cornerShape: RoundedCornerShape = RoundedCornerShape(5.dp), // default
-    val fontWeight: FontWeight = FontWeight.SemiBold // default weight
-)
+            Spacer(modifier = Modifier.width(16.dp))
 
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = app.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = app.category,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+
+            // Rating
+            Text(
+                text = app.mark,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun CategoryPage(
+    categories1: List<CategoryItem>,
+    categories2: List<CategoryItem>,
+    title: String,
+    onSearchQueryChange: (String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .padding(bottom = 14.dp, start = 14.dp, end = 14.dp, top = 14.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+        ) {
+            // Search Bar
+            SearchBar(
+                searchQuery = "",
+                onSearchQueryChange = onSearchQueryChange,
+                onClearSearch = { /* Clear handled by parent */ },
+                modifier = Modifier.padding(bottom = 24.dp)
+            )
+
+            // Page title
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onPrimary,
+                fontWeight = FontWeight.SemiBold,
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Category grid
+            CategoryGridScreen(
+                categories1 = categories1,
+                categories2 = categories2,
+                columns = 2
+            )
+        }
+    }
+}
+
+@Composable
+fun SearchBar(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var text by remember { mutableStateOf(searchQuery) }
+
+    LaunchedEffect(searchQuery) {
+        text = searchQuery
+    }
+
+    TextField(
+        value = text,
+        onValueChange = {
+            text = it
+            onSearchQueryChange(it)
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        placeholder = {
+            Text(
+                text = "Поиск приложений...",
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+            )
+        },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search",
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        trailingIcon = {
+            if (text.isNotEmpty()) {
+                IconButton(onClick = {
+                    text = ""
+                    onClearSearch()
+                }) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear search",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        },
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            disabledContainerColor = MaterialTheme.colorScheme.surface,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent
+        ),
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true
+    )
+}
+
+// Keep your existing CategoryGridScreen, CategoryButton, etc. unchanged
 // 2. Horizontal button styled with theme
 @Composable
 fun CategoryButton(category: CategoryItem) {
@@ -81,7 +385,6 @@ fun CategoryButton(category: CategoryItem) {
         )
     }
 }
-
 
 // 3. Grid screen 2 columns × 6 rows
 @Composable
@@ -149,7 +452,6 @@ fun CategoryGridScreen(
     }
 }
 
-
 @Composable
 fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem>, title: String) {
     // Outer container with background
@@ -157,7 +459,7 @@ fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(bottom = 14.dp, start = 14.dp,end = 14.dp, top = 28.dp)
+            .padding(bottom = 14.dp, start = 14.dp, end = 14.dp, top = 14.dp) // Reduced top padding
     ) {
         // THIS COLUMN IS SCROLLABLE
         Column(
@@ -165,6 +467,15 @@ fun CategoryPage(categories1: List<CategoryItem>, categories2: List<CategoryItem
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()) // <-- make entire content scrollable
         ) {
+            // Search Bar at the top
+            SearchBar(
+                modifier = Modifier.padding(bottom = 24.dp),
+                onSearch = { query ->
+                    // Handle search functionality here
+                    // You can filter categories based on the search query
+                }
+            )
+
             // Page title
             Text(
                 text = title,

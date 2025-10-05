@@ -8,109 +8,56 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+
+// AppsViewModel.kt - Add these to your existing ViewModel
 class AppsViewModel(
     private val repository: AppsRepository = AppsRepository()
 ) : ViewModel() {
 
-    // === Список всех приложений ===
-    private val _apps = MutableStateFlow<List<AppInfo>>(emptyList())
-    val apps: StateFlow<List<AppInfo>> = _apps
+    // ... your existing state flows ...
 
-    // === Список имён всех приложений ===
-    private val _appNames = MutableStateFlow<List<String>>(emptyList())
-    val appNames: StateFlow<List<String>> = _appNames
+    // === Search State ===
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
 
-    // === Состояние загрузки (общее) ===
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _searchResults = MutableStateFlow<List<AppInfo>>(emptyList())
+    val searchResults: StateFlow<List<AppInfo>> = _searchResults
 
-    // === Сообщение об ошибке или уведомление ===
-    private val _message = MutableStateFlow<String?>(null)
-    val message: StateFlow<String?> = _message
-
-    private val _cachedApps = mutableStateMapOf<String, AppInfo?>()
-    val cachedApps: Map<String, AppInfo?> = _cachedApps
+    private val _isSearching = MutableStateFlow(false)
+    val isSearching: StateFlow<Boolean> = _isSearching
 
     /**
-     * Ленивая загрузка AppInfo по имени (с кешированием)
+     * Perform search across apps
      */
-    fun loadAppInfoByName(name: String) {
-        // Если уже загружали — ничего не делаем
-        if (_cachedApps.containsKey(name)) return
+    fun searchApps(query: String) {
+        _searchQuery.value = query
 
-        // Помечаем, что начали загрузку (можно null или заглушку)
-        _cachedApps[name] = null
-
-        viewModelScope.launch {
-            try {
-                val app = repository.getAppByName(name)
-                _cachedApps[name] = app
-            } catch (e: Exception) {
-                _message.value = "Ошибка загрузки '$name': ${e.message}"
-                _cachedApps[name] = null // или оставить как есть
-            }
+        if (query.isBlank()) {
+            _searchResults.value = emptyList()
+            _isSearching.value = false
+            return
         }
-    }
-    fun loadApps() {
+
+        _isSearching.value = true
         viewModelScope.launch {
-            _isLoading.value = true
-            _message.value = null
             try {
-                _apps.value = repository.getApps()
+                _searchResults.value = repository.searchApps(query)
             } catch (e: Exception) {
-                _apps.value = emptyList()
-                _message.value = "Ошибка загрузки приложений: ${e.message}"
+                _searchResults.value = emptyList()
             } finally {
-                _isLoading.value = false
+                _isSearching.value = false
             }
         }
     }
 
     /**
-     * Загружает одно приложение по имени
+     * Clear search results
      */
-    fun loadAppByName(name: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _message.value = null
-            try {
-                val app = repository.getAppByName(name)
-                _apps.value = if (app != null) listOf(app) else emptyList()
-                if (app == null) {
-                    _message.value = "Приложение '$name' не найдено"
-                }
-            } catch (e: Exception) {
-                _apps.value = emptyList()
-                _message.value = "Ошибка поиска: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
+    fun clearSearch() {
+        _searchQuery.value = ""
+        _searchResults.value = emptyList()
+        _isSearching.value = false
     }
 
-    /**
-     * Загружает список имён всех приложений
-     */
-    fun loadAllAppNames() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _message.value = null
-            try {
-                _appNames.value = repository.getAllAppNames()
-            } catch (e: Exception) {
-                _appNames.value = emptyList()
-                _message.value = "Ошибка загрузки списка имён: ${e.message}"
-            } finally {
-                _isLoading.value = false
-            }
-        }
-    }
-
-    // --------------------------------------------------
-    // Опционально: если захочешь очищать состояние
-    fun clearApps() {
-        _apps.value = emptyList()
-        _appNames.value = emptyList()
-        _message.value = null
-    }
+    // ... your existing methods ...
 }

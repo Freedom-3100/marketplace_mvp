@@ -4,49 +4,45 @@ import com.example.marketplace_mvp.firestore.dto.AppInfo
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
+// AppsRepository.kt - Add these methods to your existing repository
 class AppsRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 ) {
 
-    /**
-     * Получает список всех приложений из коллекции "apps"
-     */
-    suspend fun getApps(): List<AppInfo> {
-        return try {
-            val result = db.collection("apps").get().await()
-            result.toObjects(AppInfo::class.java)
-        } catch (e: Exception) {
-            emptyList()
-        }
-    }
+    // ... your existing methods ...
 
     /**
-     * Получает одно приложение по имени (точное совпадение)
+     * Search apps by name (case-insensitive partial match)
      */
-    suspend fun getAppByName(name: String): AppInfo? {
-        return try {
-            val result = db.collection("apps")
-                .whereEqualTo("name", name)
-                .limit(1)
-                .get()
-                .await()
-            result.toObjects(AppInfo::class.java).firstOrNull()
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    /**
-     * Получает список имён всех приложений (только поле "name")
-     */
-    suspend fun getAllAppNames(): List<String> {
+    suspend fun searchApps(query: String): List<AppInfo> {
         return try {
             val result = db.collection("apps").get().await()
-            result.documents.mapNotNull { document ->
-                document.getString("name")
+            val allApps = result.toObjects(AppInfo::class.java)
+
+            // Client-side filtering for partial match
+            allApps.filter { app ->
+                app.name.contains(query, ignoreCase = true) ||
+                        app.description.contains(query, ignoreCase = true) ||
+                        app.category.contains(query, ignoreCase = true)
             }
         } catch (e: Exception) {
             emptyList()
         }
     }
+
+    /**
+     * Search apps by category
+     */
+    suspend fun getAppsByCategory(category: String): List<AppInfo> {
+        return try {
+            val result = db.collection("apps")
+                .whereEqualTo("category", category)
+                .get()
+                .await()
+            result.toObjects(AppInfo::class.java)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
 }
+
