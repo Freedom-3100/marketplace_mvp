@@ -65,7 +65,7 @@ fun InstallButton(
             }
         },
         modifier = Modifier
-            .padding(16.dp)
+            .padding(end = 16.dp)
             .height(36.dp) // 👈 smaller height
             .defaultMinSize(minWidth = 80.dp), // 👈 optional width control
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp), // 👈 tighter padding
